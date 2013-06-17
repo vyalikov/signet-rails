@@ -51,6 +51,8 @@ A list of items still todo or work in progress
 12. Document handling of callback in Rails
 13. Error handling...
 14. Document the various `env` values that can/will be set and when (e.g. `signet.XXX.persistance\_obj` on `auth\_callback`)
+15. Allow shortened form of common scopes (userprofile etc)
+16. Do we need a require in the initializer?
 
 ## Contributing
 
