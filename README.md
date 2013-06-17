@@ -1,6 +1,6 @@
 # Signet::Rails
 
-A basic Rails wrapper around the "Signet":https://github.com/google/signet gem
+A basic Rails wrapper around the [Signet](https://github.com/google/signet) gem
 
 Work in progress
 
