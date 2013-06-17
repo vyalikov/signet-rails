@@ -1,5 +1,5 @@
 require 'signet/rails'
-require 'signet/rails/wrappers/active_record'
+require 'active_support/core_ext/string'
 
 module Signet
   module Rails
@@ -7,7 +7,7 @@ module Signet
       @@default_options = {}
 
       def self.set_default_options opts = {}
-	# normalize to symbol version
+	# normalize to symbol hash
 	n_opts = opts.inject({}) { |memo,(k,v)| memo[k.to_sym] = v; memo }
 	@@default_options = n_opts
       end
@@ -17,17 +17,31 @@ module Signet
       end
 
       def provider(opts = {}, &block)
-	# normalize to symbol version
+	# normalize to symbol hash
 	n_opts = opts.inject({}) { |memo,(k,v)| memo[k.to_sym] = v; memo }
+
+	# use the default_options as a base... then merge these changes on top
 	combined_options = @@default_options.merge(n_opts)
 
 	# now set some defaults if they aren't already set
-	combined_options[:persist] ||= [:refresh_token, :access_token, :expires_in, :issued_at]
+	
+	combined_options[:persist_attrs] ||= [:refresh_token, :access_token, :expires_in, :issued_at]
 	combined_options[:name] ||= :google
+
+	# TODO: see https://developers.google.com/accounts/docs/OAuth2Login#authenticationuriparameters
 	combined_options[:approval_prompt] ||= 'auto'
-	combined_options[:redirect_uri] = "http://localhost:3000/signet/#{combined_options[:name]}/callback"
-	combined_options[:authorization_uri] = 'https://accounts.google.com/o/oauth2/auth'
-	combined_options[:token_credential_uri] = 'https://accounts.google.com/o/oauth2/token'
+
+	# unless specified, we need to set this at request-time because we need the env to get server etc
+	# combined_options[:redirect_uri] = ??? need env 
+	
+	# TODO: better way of sourcing these defaults... from signet?
+	combined_options[:authorization_uri] ||= 'https://accounts.google.com/o/oauth2/auth'
+	combined_options[:token_credential_uri] ||= 'https://accounts.google.com/o/oauth2/token'
+
+	# whether we handle the persistance of the auth callback or simply pass-through
+	combined_options[:handle_auth_callback] ||= true
+
+	# method to get the persistance object when creating a client via the factory
 	combined_options[:extract_from_env] ||= lambda do |env, client|
 	  u = nil
 	  session = env['rack.session']
@@ -39,7 +53,8 @@ module Signet
 	  end
 	  u
 	end
-	combined_options[:handle_callback] ||= true
+
+	# when on an auth_callback, how do we get the persistance object from the id?
 	combined_options[:extract_by_oauth_id] ||= lambda do |id, client|
 	  u = nil
 	  begin
@@ -51,19 +66,27 @@ module Signet
 	  u
 	end
 
-	def active_record_wrapper meth
+	combined_options[:persistance_wrapper] ||= :active_record
+	persistance_wrapper = lambda do |meth|
 	  lambda do |context, client|
 	    y = meth.call context, client
-	    w = Signet::Rails::Wrappers::ActiveRecord.new y, client
+	    klass_str = combined_options[:persistance_wrapper].to_s
+	    require "signet/rails/wrappers/#{klass_str}"
+	    w = "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client
 	  end
 	end
 
-	combined_options[:extract_by_oauth_id] = active_record_wrapper combined_options[:extract_by_oauth_id]
-	combined_options[:extract_from_env] = active_record_wrapper combined_options[:extract_from_env]
+	combined_options[:extract_by_oauth_id] = persistance_wrapper.call combined_options[:extract_by_oauth_id]
+	combined_options[:extract_from_env] = persistance_wrapper.call combined_options[:extract_from_env]
 
 	# TODO: check here we have the basics?
+	
+	# TODO: better auth_options split?
+	auth_option_keys = [:prompt, :redirect_uri, :access_type, :approval_prompt, :client_id]
+	base_options = combined_options
+	auth_options = base_options.select { |k,v| auth_option_keys.include? k }
 
-	use Signet::Rails::Handler, combined_options, &block
+	use Signet::Rails::Handler, base_options, auth_options, &block
       end
 
       def call(env)

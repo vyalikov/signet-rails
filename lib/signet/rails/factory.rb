@@ -5,19 +5,25 @@ module Signet
 
     class Factory
       def self.create_from_env name, env, opt_hsh = {load_token: true}
-	# rework this to use singleton?
-	handler = env["signet.#{name.to_s}"]
 
-	client = Signet::OAuth2::Client.new handler.options
+        # TODO: thread safe? best approach? Other uses below
+        client = env["signet.#{name.to_s}.instance"]
 
-	if opt_hsh[:load_token]
-	  obj = handler.options[:extract_from_env].call env, client
-	  handler.load_token_state obj, client
+        return client if !!client
+        
+        # TODO: again, not pretty...
+        handler = env["signet.#{name.to_s}"]
 
-	  env["signet.#{name.to_s}.instance"] = obj
-	end
+        client = Signet::OAuth2::Client.new handler.options
 
-	client
+        if opt_hsh[:load_token]
+          obj = handler.options[:extract_from_env].call env, client
+          handler.load_token_state obj, client
+
+          env["signet.#{name.to_s}.instance"] = obj
+        end
+
+        client
       end
     end
   end
