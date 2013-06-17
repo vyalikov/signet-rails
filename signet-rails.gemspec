@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["paul@myitcv.org.uk"]
   spec.description   = %q{A wrapper around the Google Signet OAuth Library}
   spec.summary       = %q{Incorporate Signet goodness into Rails}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/myitcv/signet-rails"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
@@ -21,4 +21,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "signet"
+  spec.add_development_dependency "rack"
 end
