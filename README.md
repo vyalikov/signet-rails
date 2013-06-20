@@ -1,8 +1,8 @@
 # Signet::Rails
 
-A basic Rails wrapper around the [Signet](https://github.com/google/signet) gem
+A basic Rails wrapper around the [Signet](https://github.com/google/signet) gem that handles persistence of a user's credentials on top of handling the auth flow within Rails applications. Check out [an example Rails app](https://github.com/myitcv/test-signet-rails) that utilises this gem.
 
-Work in progress
+Please note this is very much work in progress... issues/suggestions/etc gratefully received. Raise an issue/create a pull-request.
 
 ## Installation
 
@@ -26,7 +26,7 @@ $ gem install signet-rails
 
 ## Usage
 
-TODO: Write usage instructions here
+Check out [an example Rails app](https://github.com/myitcv/test-signet-rails) that utilises this gem.
 
 ## TODO
 
@@ -52,7 +52,6 @@ A list of items still todo or work in progress
 13. Error handling...
 14. Document the various `env` values that can/will be set and when (e.g. `signet.XXX.persistance\_obj` on `auth\_callback`)
 15. Allow shortened form of common scopes (userprofile etc)
-16. Do we need a require in the initializer?
 
 ## Contributing
 
