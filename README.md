@@ -52,6 +52,7 @@ A list of items still todo or work in progress
 13. Error handling...
 14. Document the various `env` values that can/will be set and when (e.g. `signet.XXX.persistence\_obj` on `auth\_callback`)
 15. Allow shortened form of common scopes (userprofile etc)
+16. Provider `application_name` and `applicatio_version` when initialising the client (per signet error)
 
 ## Contributing
 

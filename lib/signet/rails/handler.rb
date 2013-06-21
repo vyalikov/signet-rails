@@ -50,11 +50,7 @@ module Signet
 	  client.fetch_access_token! 
 
 	  if options[:handle_auth_callback]
-	    # TODO: remove
-	    puts '******************************************'
-	    puts client.decoded_id_token.inspect
-
-	    obj = options[:extract_by_oauth_id].call client.decoded_id_token['id'], client
+	    obj = options[:extract_by_oauth_id].call client.decoded_id_token['sub'], client
 	    persist_token_state obj, client
 	    obj.persist
 	    env["signet.#{options[:name]}.persistence_obj"] = obj.obj

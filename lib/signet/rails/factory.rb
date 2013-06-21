@@ -14,6 +14,10 @@ module Signet
         # TODO: again, not pretty...
         handler = env["signet.#{name.to_s}"]
 
+	if handler.nil? 
+	  raise ArgumentError, "Unable to find signet handler named #{name.to_s}"
+	end
+
         client = Signet::OAuth2::Client.new handler.options
 
         if opt_hsh[:load_token]
