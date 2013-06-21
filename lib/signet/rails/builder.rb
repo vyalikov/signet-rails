@@ -38,10 +38,10 @@ module Signet
 	combined_options[:authorization_uri] ||= 'https://accounts.google.com/o/oauth2/auth'
 	combined_options[:token_credential_uri] ||= 'https://accounts.google.com/o/oauth2/token'
 
-	# whether we handle the persistance of the auth callback or simply pass-through
+	# whether we handle the persistence of the auth callback or simply pass-through
 	combined_options[:handle_auth_callback] ||= true
 
-	# method to get the persistance object when creating a client via the factory
+	# method to get the persistence object when creating a client via the factory
 	combined_options[:extract_from_env] ||= lambda do |env, client|
 	  u = nil
 	  session = env['rack.session']
@@ -54,7 +54,7 @@ module Signet
 	  u
 	end
 
-	# when on an auth_callback, how do we get the persistance object from the id?
+	# when on an auth_callback, how do we get the persistence object from the id?
 	combined_options[:extract_by_oauth_id] ||= lambda do |id, client|
 	  u = nil
 	  begin
@@ -66,18 +66,18 @@ module Signet
 	  u
 	end
 
-	combined_options[:persistance_wrapper] ||= :active_record
-	persistance_wrapper = lambda do |meth|
+	combined_options[:persistence_wrapper] ||= :active_record
+	persistence_wrapper = lambda do |meth|
 	  lambda do |context, client|
 	    y = meth.call context, client
-	    klass_str = combined_options[:persistance_wrapper].to_s
+	    klass_str = combined_options[:persistence_wrapper].to_s
 	    require "signet/rails/wrappers/#{klass_str}"
 	    w = "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client
 	  end
 	end
 
-	combined_options[:extract_by_oauth_id] = persistance_wrapper.call combined_options[:extract_by_oauth_id]
-	combined_options[:extract_from_env] = persistance_wrapper.call combined_options[:extract_from_env]
+	combined_options[:extract_by_oauth_id] = persistence_wrapper.call combined_options[:extract_by_oauth_id]
+	combined_options[:extract_from_env] = persistence_wrapper.call combined_options[:extract_from_env]
 
 	# TODO: check here we have the basics?
 	

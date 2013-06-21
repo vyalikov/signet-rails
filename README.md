@@ -42,7 +42,7 @@ A list of items still todo or work in progress
 3. Better way of sourcing the Google default authorization_uri and token_credential_uri? From signet directly?
 4. Clear definition of the Signet options and the `signet-rails` options
 5. More Rails-esque way of getting the `rack.session` in `extract\_from\_env`?
-6. Better way of loading persistance wrappers in builder?
+6. Better way of loading persistence wrappers in builder?
 7. Check to see whether we have all required signet options at the end of Builder.provder?
 8. Sort out `approval\_prompt` vs 'prompt'
 9. Better `auth\_options` split at the end of Builder.provider?
@@ -50,7 +50,7 @@ A list of items still todo or work in progress
 11. Refactor Handler.handle code... messy
 12. Document handling of callback in Rails
 13. Error handling...
-14. Document the various `env` values that can/will be set and when (e.g. `signet.XXX.persistance\_obj` on `auth\_callback`)
+14. Document the various `env` values that can/will be set and when (e.g. `signet.XXX.persistence\_obj` on `auth\_callback`)
 15. Allow shortened form of common scopes (userprofile etc)
 
 ## Contributing

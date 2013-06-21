@@ -57,7 +57,7 @@ module Signet
 	    obj = options[:extract_by_oauth_id].call client.decoded_id_token['id'], client
 	    persist_token_state obj, client
 	    obj.persist
-	    env["signet.#{options[:name]}.persistance_obj"] = obj.obj
+	    env["signet.#{options[:name]}.persistence_obj"] = obj.obj
 	  else
 	    env["signet.#{options[:name]}.auth_client"] = client
 	  end
