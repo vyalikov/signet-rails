@@ -65,7 +65,8 @@ module Signet
       def persist_token_state wrapper, client
 	for i in options[:persist_attrs]
 	  if client.respond_to?(i) && wrapper.obj.respond_to?(i.to_s+'=')
-	    wrapper.obj.method(i.to_s+'=').call(client.method(i).call)
+	    # only transfer the value if it is non-nil
+	    wrapper.obj.method(i.to_s+'=').call(client.method(i).call) unless client.method(i).call.nil?
 	  end
 	end
       end
