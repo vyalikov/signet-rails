@@ -54,6 +54,10 @@ A list of items still todo or work in progress
 15. Allow shortened form of common scopes (userprofile etc)
 16. Provider `application_name` and `applicatio_version` when initialising the client (per signet error)
 
+## Credits
+
+Credit where it is due, much of what you see here is derived from lessons learned using [omniauth](https://github.com/intridea/omniauth)* 
+
 ## Contributing
 
 1. Fork it
