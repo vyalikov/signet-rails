@@ -56,7 +56,7 @@ A list of items still todo or work in progress
 
 ## Credits
 
-Credit where it is due, much of what you see here is derived from lessons learned using [omniauth](https://github.com/intridea/omniauth)* 
+Credit where it is due, much of what you see here is derived from lessons learned using [omniauth](https://github.com/intridea/omniauth)* but also this [great post by Greg Baugues](http://blog.baugues.com/google-calendar-api-oauth2-and-ruby-on-rails)
 
 ## Contributing
 
