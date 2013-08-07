@@ -89,9 +89,10 @@ module Signet
 
 	  status, headers, body = @app.call(env)
 
-	  obj = env["signet.#{options[:name]}.instance"] 
-	  if !!obj
-	    obj.persist
+	  instance = env["signet.#{options[:name]}.instance"] 
+	  if !!instance
+	    persist_token_state instance, instance.client
+	    instance.persist
 	  end
 
 	end

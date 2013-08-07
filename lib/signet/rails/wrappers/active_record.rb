@@ -7,9 +7,8 @@ module Signet
           @client = client
         end
 
-        def obj
-          @obj
-        end
+	attr_reader :obj
+	attr_reader :client
 
         def persist
           if @obj.changed?

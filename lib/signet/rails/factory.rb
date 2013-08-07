@@ -5,14 +5,15 @@ module Signet
 
     class Factory
       def self.create_from_env name, env, opt_hsh = {load_token: true}
-
-        # TODO: thread safe? best approach? Other uses below
-        client = env["signet.#{name.to_s}.instance"]
+        
+        # TODO: not pretty...thread safe? best approach? Other uses below
+        handler = env["signet.#{name.to_s}"]
+	instance = env["signet.#{name.to_s}.instance"]
+	
+        #client = instance.obj
+        client = instance
 
         return client if !!client
-        
-        # TODO: again, not pretty...
-        handler = env["signet.#{name.to_s}"]
 
 	if handler.nil? 
 	  raise ArgumentError, "Unable to find signet handler named #{name.to_s}"
@@ -24,7 +25,8 @@ module Signet
           obj = handler.options[:extract_from_env].call env, client
           handler.load_token_state obj, client
 
-          env["signet.#{name.to_s}.instance"] = obj
+          #instance.obj = obj
+	  env["signet.#{name.to_s}.instance"] = obj
         end
 
         client
