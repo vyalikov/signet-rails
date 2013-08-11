@@ -96,7 +96,7 @@ module Signet
 	      end
 	    end
 
-	    oac = u.o_auth2_credentials.first_or_initialize(name: combined_options[:name], uid: id)
+	    oac = u.o_auth2_credentials.first_or_initialize(name: combined_options[:name])
 
 	  rescue ActiveRecord::RecordNotFound => e
 	  end

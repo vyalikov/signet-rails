@@ -63,18 +63,32 @@ module Signet
       end
 
       def persist_token_state wrapper, client
+	if not wrapper.obj.respond_to?(options[:storage_attr])
+	  raise "Persistence object does not support the storage attribute #{options[:storage_attr]}"
+	end
+
+	if (store_hash = wrapper.obj.method(options[:storage_attr]).call).nil?
+	  store_hash = wrapper.obj.method("#{options[:storage_attr]}=").call({})
+	end
+
 	for i in options[:persist_attrs]
-	  if client.respond_to?(i) && wrapper.obj.respond_to?(i.to_s+'=')
+	  if client.respond_to?(i) 
 	    # only transfer the value if it is non-nil
-	    wrapper.obj.method(i.to_s+'=').call(client.method(i).call) unless client.method(i).call.nil?
+	    store_hash[i.to_s] = client.method(i).call unless client.method(i).call.nil?
 	  end
 	end
       end
 
       def load_token_state wrapper, client
-	for i in options[:persist_attrs]
-	  if wrapper.obj.respond_to?(i) && client.respond_to?(i.to_s+'=')
-	    client.method(i.to_s+'=').call(wrapper.obj.method(i).call)
+	if not wrapper.obj.respond_to?(options[:storage_attr])
+	  raise "Persistence object does not support the storage attribute #{options[:storage_attr]}"
+	end
+
+	if not (store_hash = wrapper.obj.method(options[:storage_attr]).call).nil?
+	  for i in options[:persist_attrs]
+	    if client.respond_to?(i.to_s+'=')
+	      client.method(i.to_s+'=').call(store_hash[i.to_s])
+	    end
 	  end
 	end
       end
