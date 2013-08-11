@@ -28,6 +28,23 @@ module Signet
 	combined_options[:persist_attrs] ||= [:refresh_token, :access_token, :expires_in, :issued_at]
 	combined_options[:name] ||= :google
 
+	# is this a login-based OAuth2 adapter? If so, the callback will be used to identify a
+	# user and create one if necessary
+	# Options: :login, :webserver
+	combined_options[:type] = :login
+
+	# name of hash-behaving attribute on our wrapper that contains credentials
+	# keyed by :name
+	# {
+        #   "google": {
+        #     "uid": "012345676789abcde",
+        #     "refresh_token": "my_first_refresh_token",
+        #     "access_token": "my_first_access_token",
+        #     "expires_in": 123
+        #   }
+        # }
+	combined_options[:storage_attr] ||= :signet
+
 	# TODO: see https://developers.google.com/accounts/docs/OAuth2Login#authenticationuriparameters
 	combined_options[:approval_prompt] ||= 'auto'
 
@@ -41,29 +58,50 @@ module Signet
 	# whether we handle the persistence of the auth callback or simply pass-through
 	combined_options[:handle_auth_callback] ||= true
 
-	# method to get the persistence object when creating a client via the factory
+	# The following lambda will be used when creating a new client in a factory
+	# to get the persistence object 
 	combined_options[:extract_from_env] ||= lambda do |env, client|
-	  u = nil
+	  oac = nil
 	  session = env['rack.session']
 	  if !!session && !!session[:user_id]
 	    begin
 	      u = User.find(session[:user_id])
+	      oac = u.o_auth2_credentials.where(name: combined_options[:name]).first
 	    rescue ActiveRecord::RecordNotFound => e
 	    end
 	  end
-	  u
+	  oac
 	end
 
-	# when on an auth_callback, how do we get the persistence object from the id?
+	# The following lambda will be used when handling the callback from the oauth server
+	# In this flow we might not yet have established a session... need to handle two
+	# flows, one for login, one not
+	# when on a login auth_callback, how do we get the persistence object from the JWT?
 	combined_options[:extract_by_oauth_id] ||= lambda do |id, client|
-	  u = nil
+	  oac = nil
 	  begin
-	    u = User.where(uid: id).first_or_initialize(
-	      refresh_token: client.refresh_token
-	    )
+	    u = nil
+	    if combined_options[:type] == :login
+	      u = User.first_or_initialize(uid: id)
+	      u.save
+	    else
+	      session = env['rack.session']
+	      if !!session && !!session[:user_id]
+		begin
+		  u = User.find(session[:user_id])
+		rescue ActiveRecord::RecordNotFound => e
+		end
+	      else
+		raise "Expected to be able to find user in session"
+	      end
+	    end
+
+	    oac = u.o_auth2_credentials.first_or_initialize(name: combined_options[:name])
+
 	  rescue ActiveRecord::RecordNotFound => e
 	  end
-	  u
+
+	  oac
 	end
 
 	combined_options[:persistence_wrapper] ||= :active_record
