@@ -31,7 +31,7 @@ module Signet
 	# is this a login-based OAuth2 adapter? If so, the callback will be used to identify a
 	# user and create one if necessary
 	# Options: :login, :webserver
-	combined_options[:type] = :login
+	combined_options[:type] ||= :webserver
 
 	# name of hash-behaving attribute on our wrapper that contains credentials
 	# keyed by :name
@@ -82,7 +82,7 @@ module Signet
 	  begin
 	    u = nil
 	    if combined_options[:type] == :login
-	      u = User.first_or_initialize(uid: id)
+	      u = User.first_or_initialize(uid: combined_options[:name].to_s + "_" + id)
 	      u.save
 	    else
 	      session = env['rack.session']
