@@ -77,7 +77,7 @@ module Signet
 	# In this flow we might not yet have established a session... need to handle two
 	# flows, one for login, one not
 	# when on a login auth_callback, how do we get the persistence object from the JWT?
-	combined_options[:extract_by_oauth_id] ||= lambda do |id, client|
+	combined_options[:extract_by_oauth_id] ||= lambda do |env, client, id|
 	  oac = nil
 	  begin
 	    u = nil
@@ -105,9 +105,12 @@ module Signet
 	end
 
 	combined_options[:persistence_wrapper] ||= :active_record
+
+	# define a lambda that returns a lambda that wraps our OAC lambda return object
+	# in a persistance object
 	persistence_wrapper = lambda do |meth|
-	  lambda do |context, client|
-	    y = meth.call context, client
+	  lambda do |env, client, *args|
+	    y = meth.call env, client, *args
 	    klass_str = combined_options[:persistence_wrapper].to_s
 	    require "signet/rails/wrappers/#{klass_str}"
 	    w = "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client

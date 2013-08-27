@@ -1,0 +1,37 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ActiveRecord	lib/signet/rails/wrappers/active_record.rb	/^      class ActiveRecord$/;"	c	class:Signet.Rails.Wrappers
+Builder	lib/signet/rails/builder.rb	/^    class Builder < ::Rack::Builder$/;"	c	class:Signet.Rails
+Factory	lib/signet/rails/factory.rb	/^    class Factory$/;"	c	class:Signet.Rails
+Handler	lib/signet/rails/handler.rb	/^    class Handler$/;"	c	class:Signet.Rails
+Rails	lib/signet/rails.rb	/^  module Rails$/;"	m	class:Signet
+Rails	lib/signet/rails/builder.rb	/^  module Rails$/;"	m	class:Signet
+Rails	lib/signet/rails/factory.rb	/^  module Rails$/;"	m	class:Signet
+Rails	lib/signet/rails/handler.rb	/^  module Rails$/;"	m	class:Signet
+Rails	lib/signet/rails/version.rb	/^  module Rails$/;"	m	class:Signet
+Rails	lib/signet/rails/wrappers/active_record.rb	/^  module Rails$/;"	m	class:Signet
+Signet	lib/signet/rails.rb	/^module Signet$/;"	m
+Signet	lib/signet/rails/builder.rb	/^module Signet$/;"	m
+Signet	lib/signet/rails/factory.rb	/^module Signet$/;"	m
+Signet	lib/signet/rails/handler.rb	/^module Signet$/;"	m
+Signet	lib/signet/rails/version.rb	/^module Signet$/;"	m
+Signet	lib/signet/rails/wrappers/active_record.rb	/^module Signet$/;"	m
+Wrappers	lib/signet/rails/wrappers/active_record.rb	/^    module Wrappers$/;"	m	class:Signet.Rails
+auth_options	lib/signet/rails/handler.rb	/^      def auth_options env$/;"	f	class:Signet.Rails.Handler
+call	lib/signet/rails/builder.rb	/^      def call(env)$/;"	f	class:Signet.Rails.Builder
+call	lib/signet/rails/handler.rb	/^      def call(env)$/;"	f	class:Signet.Rails.Handler
+create_from_env	lib/signet/rails/factory.rb	/^      def self.create_from_env name, env, opt_hsh = {load_token: true}$/;"	F	class:Signet.Rails.Factory
+handle	lib/signet/rails/handler.rb	/^      def handle(env)$/;"	f	class:Signet.Rails.Handler
+initialize	lib/signet/rails/builder.rb	/^      def initialize(app, &block)$/;"	f	class:Signet.Rails.Builder
+initialize	lib/signet/rails/handler.rb	/^      def initialize(app, opts = {}, auth_opts = {}, &block)$/;"	f	class:Signet.Rails.Handler
+initialize	lib/signet/rails/wrappers/active_record.rb	/^        def initialize obj, client$/;"	f	class:Signet.Rails.Wrappers.ActiveRecord
+load_token_state	lib/signet/rails/handler.rb	/^      def load_token_state wrapper, client$/;"	f	class:Signet.Rails.Handler
+options	lib/signet/rails/handler.rb	/^      def options$/;"	f	class:Signet.Rails.Handler
+persist	lib/signet/rails/wrappers/active_record.rb	/^        def persist$/;"	f	class:Signet.Rails.Wrappers.ActiveRecord
+persist_token_state	lib/signet/rails/handler.rb	/^      def persist_token_state wrapper, client$/;"	f	class:Signet.Rails.Handler
+provider	lib/signet/rails/builder.rb	/^      def provider(opts = {}, &block)$/;"	f	class:Signet.Rails.Builder
+set_default_options	lib/signet/rails/builder.rb	/^      def self.set_default_options opts = {}$/;"	F	class:Signet.Rails.Builder

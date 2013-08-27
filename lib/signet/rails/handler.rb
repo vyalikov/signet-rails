@@ -50,7 +50,7 @@ module Signet
 	  client.fetch_access_token! 
 
 	  if options[:handle_auth_callback]
-	    obj = options[:extract_by_oauth_id].call client.decoded_id_token['sub'], client
+	    obj = options[:extract_by_oauth_id].call env, client, client.decoded_id_token['sub']
 	    persist_token_state obj, client
 	    obj.persist
 	    env["signet.#{options[:name]}.persistence_obj"] = obj.obj
@@ -71,12 +71,20 @@ module Signet
 	  store_hash = wrapper.obj.method("#{options[:storage_attr]}=").call({})
 	end
 
+	# not nice... the wrapper.obj.changed? will only be triggered if we clone the hash
+	# Is this a bug? https://github.com/rails/rails/issues/11968
+	# TODO: check if there is a better solution
+	store_hash = store_hash.clone
+
 	for i in options[:persist_attrs]
 	  if client.respond_to?(i) 
 	    # only transfer the value if it is non-nil
 	    store_hash[i.to_s] = client.method(i).call unless client.method(i).call.nil?
 	  end
 	end
+
+	wrapper.obj.method("#{options[:storage_attr]}=").call(store_hash)
+	
       end
 
       def load_token_state wrapper, client
