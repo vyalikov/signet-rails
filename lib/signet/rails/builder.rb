@@ -8,7 +8,8 @@ module Signet
 
       def self.set_default_options opts = {}
 	# normalize to symbol hash
-	n_opts = opts.inject({}) { |memo,(k,v)| memo[k.to_sym] = v; memo }
+	n_opts = opts.symbolize_keys
+
 	@@default_options = n_opts
       end
 
@@ -18,13 +19,12 @@ module Signet
 
       def provider(opts = {}, &block)
 	# normalize to symbol hash
-	n_opts = opts.inject({}) { |memo,(k,v)| memo[k.to_sym] = v; memo }
+	n_opts = opts.symbolize_keys
 
 	# use the default_options as a base... then merge these changes on top
 	combined_options = @@default_options.merge(n_opts)
 
 	# now set some defaults if they aren't already set
-	
 	combined_options[:persist_attrs] ||= [:refresh_token, :access_token, :expires_in, :issued_at]
 	combined_options[:name] ||= :google
 
@@ -63,7 +63,7 @@ module Signet
 	combined_options[:extract_from_env] ||= lambda do |env, client|
 	  oac = nil
 	  session = env['rack.session']
-	  if !!session && !!session[:user_id]
+	  if session && session[:user_id]
 	    begin
 	      u = User.find(session[:user_id])
 	      oac = u.o_auth2_credentials.where(name: combined_options[:name]).first
@@ -82,11 +82,10 @@ module Signet
 	  begin
 	    u = nil
 	    if combined_options[:type] == :login
-	      u = User.first_or_initialize(uid: combined_options[:name].to_s + "_" + id)
-	      u.save
+	      u = User.first_or_create(uid: combined_options[:name].to_s + "_" + id)
 	    else
 	      session = env['rack.session']
-	      if !!session && !!session[:user_id]
+	      if session && session[:user_id]
 		begin
 		  u = User.find(session[:user_id])
 		rescue ActiveRecord::RecordNotFound => e
@@ -108,6 +107,7 @@ module Signet
 
 	# define a lambda that returns a lambda that wraps our OAC lambda return object
 	# in a persistance object
+
 	persistence_wrapper = lambda do |meth|
 	  lambda do |env, client, *args|
 	    y = meth.call env, client, *args
@@ -124,10 +124,9 @@ module Signet
 	
 	# TODO: better auth_options split?
 	auth_option_keys = [:prompt, :redirect_uri, :access_type, :approval_prompt, :client_id]
-	base_options = combined_options
-	auth_options = base_options.select { |k,v| auth_option_keys.include? k }
+	auth_options = combined_options.select { |k,v| auth_option_keys.include? k }
 
-	use Signet::Rails::Handler, base_options, auth_options, &block
+	use Signet::Rails::Handler, combined_options, auth_options, &block
       end
 
       def call(env)
