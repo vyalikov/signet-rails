@@ -13,11 +13,19 @@ module Signet
       BUILTIN_OPTIONS = {
         persist_attrs: [:refresh_token, :access_token, :expires_in, :issued_at],
         name: :google,
+
+        # is this a login-based OAuth2 adapter? If so, the callback will be used to identify a
+        # user and create one if necessary
+        # Options: :login, :webserver
         type: :webserver,
         storage_attr: :signet,
+
+        # TODO: see https://developers.google.com/accounts/docs/OAuth2Login#authenticationuriparameters
         approval_prompt: 'auto',
         authorization_uri: 'https://accounts.google.com/o/oauth2/auth',
         token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
+
+        # whether we handle the persistence of the auth callback or simply pass-through
         handle_auth_callback: true,
         persistence_wrapper: :active_record
       }
@@ -32,49 +40,23 @@ module Signet
       end
 
       def provider(opts = {}, &block)
+        # Use BUILTIN_OPTIONS as base then merge default_options upon them, then options from parameter on top
+        combined_options = BUILTIN_OPTIONS.merge(Builder.default_options.merge(opts.symbolize_keys))
 
-        # use the default_options as a base... then merge these changes on top
-        combined_options = BUILTIN_OPTIONS.merge(Builder.default_options.merge(opts.symbolize_keys));
-
-        # now set some defaults if they aren't already set
-        # combined_options[:persist_attrs] ||= [:refresh_token, :access_token, :expires_in, :issued_at]
-        # combined_options[:name] ||= :google
-
-        # is this a login-based OAuth2 adapter? If so, the callback will be used to identify a
-        # user and create one if necessary
-        # Options: :login, :webserver
-        # combined_options[:type] ||= :webserver
-
-        # name of hash-behaving attribute on our wrapper that contains credentials
-        # keyed by :name
         # {
-              #   "google": {
-              #     "uid": "012345676789abcde",
-              #     "refresh_token": "my_first_refresh_token",
-              #     "access_token": "my_first_access_token",
-              #     "expires_in": 123
-              #   }
-              # }
-        # combined_options[:storage_attr] ||= :signet
-
-        # TODO: see https://developers.google.com/accounts/docs/OAuth2Login#authenticationuriparameters
-        # combined_options[:approval_prompt] ||= 'auto'
+        #   "google": {
+        #     "uid": "012345676789abcde",
+        #     "refresh_token": "my_first_refresh_token",
+        #     "access_token": "my_first_access_token",
+        #     "expires_in": 123
+        #   }
+        # }
 
         # unless specified, we need to set this at request-time because we need the env to get server etc
         # combined_options[:redirect_uri] = ??? need env
 
-        # TODO: better way of sourcing these defaults... from signet?
-        # combined_options[:authorization_uri] ||= 'https://accounts.google.com/o/oauth2/auth'
-        # combined_options[:token_credential_uri] ||= 'https://accounts.google.com/o/oauth2/token'
-
-        # whether we handle the persistence of the auth callback or simply pass-through
-        # combined_options[:handle_auth_callback] ||= true
-
         # The following lambda will be used when creating a new client in a factory
         # to get the persistence object
-
-
-        # - default options
         combined_options[:extract_from_env] ||= lambda do |env, client|
           process_with_user_id(env) do |user_id|
             u = User.find(user_id)
@@ -134,7 +116,8 @@ module Signet
         to_app.call(env)
       end
 
-    private
+      private
+
       def process_with_user_id(env, session_required = false, &block)
         session = env['rack.session']
 
