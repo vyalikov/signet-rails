@@ -57,45 +57,16 @@ module Signet
 
         # The following lambda will be used when creating a new client in a factory
         # to get the persistence object
-        combined_options[:extract_from_env] ||= lambda do |env, client|
-          process_with_user_id(env) do |user_id|
-            u = User.find(user_id)
-            u.o_auth2_credentials.where(name: combined_options[:name]).first
-          end
-        end
+        combined_options[:extract_from_env] ||= user_oauth_credentials_fetcher(combined_options[:name])
 
         # The following lambda will be used when handling the callback from the oauth server
         # In this flow we might not yet have established a session... need to handle two
         # flows, one for login, one not
         # when on a login auth_callback, how do we get the persistence object from the JWT?
-        combined_options[:extract_by_oauth_id] ||= lambda do |env, client, id|
-          begin
-            # TODO: More refactoring
-            u =
-              if combined_options[:type] == :login
-                User.first_or_create(uid: "#{combined_options[:name]}_#{id}")
-              else
-                process_with_user_id(env, true) do |user_id|
-                  User.find(user_id)
-                end
-              end
+        combined_options[:extract_by_oauth_id] ||= \
+          user_oauth_credentials_creator(combined_options[:name], combined_options[:type])
 
-            u.o_auth2_credentials.first_or_initialize(name: combined_options[:name])
-          rescue ActiveRecord::RecordNotFound
-            nil
-          end
-        end
-
-        # combined_options[:persistence_wrapper] ||= :active_record
-
-        # define a lambda that returns a lambda that wraps our OAC lambda return object
-        # in a persistance object
-        klass_name = combined_options[:persistence_wrapper].to_s
-
-        combined_options[:extract_by_oauth_id] = \
-          persistence_wrapper_lambda(klass_name).call combined_options[:extract_by_oauth_id]
-        combined_options[:extract_from_env] = \
-          persistence_wrapper_lambda(klass_name).call combined_options[:extract_from_env]
+        wrap_extraction_callbacks_in_persistence(combined_options)
 
         # TODO: check here we have the basics?
 
@@ -111,6 +82,45 @@ module Signet
       end
 
       private
+
+      def get_or_create_user(name, id, env, creation_flag)
+        if creation_flag
+          User.first_or_create(uid: "#{name}_#{id}")
+        else
+          process_with_user_id(env, true) do |user_id|
+            User.find(user_id)
+          end
+        end
+      end
+
+      def user_oauth_credentials_creator(name, type)
+        lambda do |env, client, id|
+          begin
+            u = get_or_create_user(name, id, env, type == :login)
+            u.o_auth2_credentials.first_or_initialize(name: name)
+          rescue ActiveRecord::RecordNotFound
+            nil
+          end
+        end
+      end
+
+      def user_oauth_credentials_fetcher(name)
+        lambda do |env, client|
+          process_with_user_id(env) do |user_id|
+            u = User.find(user_id)
+            u.o_auth2_credentials.where(name: name).first
+          end
+        end
+      end
+
+      def wrap_extraction_callbacks_in_persistence(combined_options)
+        klass_name = combined_options[:persistence_wrapper].to_s
+
+        combined_options[:extract_by_oauth_id] = \
+          persistence_wrapper_lambda(klass_name).call combined_options[:extract_by_oauth_id]
+        combined_options[:extract_from_env] = \
+          persistence_wrapper_lambda(klass_name).call combined_options[:extract_from_env]
+      end
 
       def persistence_wrapper_lambda(klass_str)
         lambda do |meth|
