@@ -7,8 +7,8 @@ module Signet
 
       class << self
         attr_accessor :default_options # better than @@ variable
-        default_options = {}
       end
+      Builder.default_options = {}
 
       BUILTIN_OPTIONS = {
         persist_attrs: [:refresh_token, :access_token, :expires_in, :issued_at],
@@ -90,18 +90,12 @@ module Signet
 
         # define a lambda that returns a lambda that wraps our OAC lambda return object
         # in a persistance object
+        klass_name = combined_options[:persistence_wrapper].to_s
 
-        persistence_wrapper = lambda do |meth|
-          lambda do |env, client, *args|
-            y = meth.call env, client, *args
-            klass_str = combined_options[:persistence_wrapper].to_s
-            require "signet/rails/wrappers/#{klass_str}"
-            "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client
-          end
-        end
-
-        combined_options[:extract_by_oauth_id] = persistence_wrapper.call combined_options[:extract_by_oauth_id]
-        combined_options[:extract_from_env] = persistence_wrapper.call combined_options[:extract_from_env]
+        combined_options[:extract_by_oauth_id] = \
+          persistence_wrapper_lambda(klass_name).call combined_options[:extract_by_oauth_id]
+        combined_options[:extract_from_env] = \
+          persistence_wrapper_lambda(klass_name).call combined_options[:extract_from_env]
 
         # TODO: check here we have the basics?
 
@@ -118,19 +112,31 @@ module Signet
 
       private
 
+      def persistence_wrapper_lambda(klass_str)
+        lambda do |meth|
+          lambda do |env, client, *args|
+            y = meth.call env, client, *args
+            require "signet/rails/wrappers/#{klass_str}"
+            "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client
+          end
+        end
+      end
+
       def process_with_user_id(env, session_required = false, &block)
         session = env['rack.session']
 
-        if session && session[:user_id]
-          begin
-            yield(session[:user_id])
-          rescue ActiveRecord::RecordNotFound
-            nil
-          end
-        else
-          fail 'Expected to be able to find user in session' if session_required
+        return nil_or_fail(session_required) unless session && session[:user_id]
+
+        begin
+          yield(session[:user_id])
+        rescue ActiveRecord::RecordNotFound
           nil
         end
+      end
+
+      def nil_or_fail(fail_flag)
+        fail 'Expected to be able to find user in session' if fail_flag
+        nil
       end
 
     end
