@@ -45,6 +45,7 @@ module Signet
                              Builder.default_options.merge \
                                opts.symbolize_keys
 
+        provider_name = combined_options[:name]
         # {
         #   "google": {
         #     "uid": "012345676789abcde",
@@ -59,14 +60,13 @@ module Signet
 
         # The following lambda will be used when creating a new client in a factory
         # to get the persistence object
-        combined_options[:extract_from_env] ||= user_oauth_credentials_fetcher(combined_options[:name])
+        combined_options[:extract_from_session] ||= oauth_credentials_fetcher(provider_name)
 
         # The following lambda will be used when handling the callback from the oauth server
         # In this flow we might not yet have established a session... need to handle two
         # flows, one for login, one not
         # when on a login auth_callback, how do we get the persistence object from the JWT?
-        combined_options[:extract_by_oauth_id] ||= \
-          user_oauth_credentials_creator(combined_options[:name], combined_options[:type])
+        combined_options[:extract_by_oauth_id] ||= oauth_credentials_creator(provider_name, combined_options[:type])
 
         wrap_extraction_callbacks_in_persistence(combined_options)
 
@@ -85,20 +85,20 @@ module Signet
 
       private
 
-      def get_or_create_user(name, id, env, creation_flag)
-        if creation_flag
+      def get_or_create_user(name, id, env, type)
+        if type == :login
           User.first_or_create(uid: "#{name}_#{id}")
         else
-          process_with_user_id(env, true) do |user_id|
+          process_with_user_id_from_session_strict(env['rack.session']) do |user_id|
             User.find(user_id)
           end
         end
       end
 
-      def user_oauth_credentials_creator(name, type)
+      def oauth_credentials_creator(name, type)
         lambda do |env, client, id|
           begin
-            u = get_or_create_user(name, id, env, type == :login)
+            u = get_or_create_user(name, id, env, type)
             u.o_auth2_credentials.first_or_initialize(name: name)
           rescue ActiveRecord::RecordNotFound
             nil
@@ -106,9 +106,9 @@ module Signet
         end
       end
 
-      def user_oauth_credentials_fetcher(name)
-        lambda do |env, client|
-          process_with_user_id(env) do |user_id|
+      def oauth_credentials_fetcher(name)
+        lambda do |session, client|
+          process_with_user_id_from_session(session) do |user_id|
             u = User.find(user_id)
             u.o_auth2_credentials.where(name: name).first
           end
@@ -116,41 +116,36 @@ module Signet
       end
 
       def wrap_extraction_callbacks_in_persistence(combined_options)
-        klass_name = combined_options[:persistence_wrapper].to_s
+        wrapper_name = combined_options[:persistence_wrapper].to_s
 
         combined_options[:extract_by_oauth_id] = \
-          persistence_wrapper_lambda(klass_name).call combined_options[:extract_by_oauth_id]
-        combined_options[:extract_from_env] = \
-          persistence_wrapper_lambda(klass_name).call combined_options[:extract_from_env]
+          wrap_in_persistence(wrapper_name, combined_options[:extract_by_oauth_id])
+        combined_options[:extract_from_session] = \
+          wrap_in_persistence(wrapper_name, combined_options[:extract_from_session])
       end
 
-      def persistence_wrapper_lambda(klass_str)
-        lambda do |meth|
-          lambda do |env, client, *args|
-            y = meth.call env, client, *args
-            require "signet/rails/wrappers/#{klass_str}"
-            "Signet::Rails::Wrappers::#{klass_str.camelize}".constantize.new y, client
-          end
+      def wrap_in_persistence(wrapper_name, original_method)
+        lambda do |env, client, *args|
+          original_method_result = original_method.call env, client, *args
+          require "signet/rails/wrappers/#{wrapper_name}"
+          "Signet::Rails::Wrappers::#{wrapper_name.camelize}".constantize.new original_method_result, client
         end
       end
 
-      def process_with_user_id(env, session_required = false, &block)
-        session = env['rack.session']
+      def process_with_user_id_from_session_strict(session, &block)
+        fail 'Expected to be able to find user in session' unless session && session[:user_id]
+        process_with_user_id_from_session(session, &block)
+      end
 
-        return nil_or_fail(session_required) unless session && session[:user_id]
+      def process_with_user_id_from_session(session, &block)
+        return nil unless session && session[:user_id]
 
         begin
-          yield(session[:user_id])
+          yield session[:user_id]
         rescue ActiveRecord::RecordNotFound
           nil
         end
       end
-
-      def nil_or_fail(fail_flag)
-        fail 'Expected to be able to find user in session' if fail_flag
-        nil
-      end
-
     end
   end
 end

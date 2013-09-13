@@ -23,7 +23,7 @@ module Signet
       end
 
       def self.extract_instance_from_env(handler, env, client)
-        obj = handler.options[:extract_from_env].call env, client
+        obj = handler.options[:extract_from_session].call env['rack.session'], client
         handler.load_token_state obj, client
 
         # client.obj = obj
