@@ -66,7 +66,8 @@ module Signet
           fail "Persistence object does not support the storage attribute #{options[:storage_attr]}"
         end
 
-        if (store_hash = wrapper.obj.method(options[:storage_attr]).call)
+        store_hash = wrapper.obj.method(options[:storage_attr]).call
+        if store_hash
           options[:persist_attrs].each do |i|
             client.method(i.to_s + '=').call(store_hash[i.to_s]) if client.respond_to?(i.to_s + '=')
           end
