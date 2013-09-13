@@ -7,14 +7,14 @@ module Signet
 
       def self.create_from_env(name, env, options = { load_token: true })
         # TODO: not pretty...thread safe? best approach? Other uses below
-        env["signet.#{name.to_s}.instance"] ||
-          get_client_from_handler(env["signet.#{name.to_s}"], name, env, options)
+        env["signet.#{name}.instance"] ||
+          get_client_from_handler(env["signet.#{name}"], name, env, options)
       end
 
       private
 
       def self.get_client_from_handler(handler, name, env, options)
-        raise ArgumentError, "Unable to find signet handler named #{name.to_s}" unless handler
+        raise ArgumentError, "Unable to find signet handler named #{name}" unless handler
 
         client = Signet::OAuth2::Client.new handler.options
         extract_instance_from_env(handler, env, client) if options[:load_token]
@@ -27,7 +27,7 @@ module Signet
         handler.load_token_state obj, client
 
         # client.obj = obj
-        env["signet.#{name.to_s}.instance"] = obj
+        env["signet.#{name}.instance"] = obj
       end
     end
   end
