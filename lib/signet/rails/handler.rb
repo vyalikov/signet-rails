@@ -42,34 +42,35 @@ module Signet
       end
 
       def persist_token_state(wrapper, client)
-        unless wrapper.obj.respond_to?(options[:storage_attr])
-          fail "Persistence object does not support the storage attribute #{options[:storage_attr]}"
+        storage = options[:storage_attr]
+
+        unless wrapper.credentials.respond_to?(storage)
+          fail "Persistence object does not support the storage attribute #{storage}"
         end
 
-        store_hash = wrapper.obj.method(options[:storage_attr]).call ||
-                      wrapper.obj.method("#{options[:storage_attr]}=").call({})
+        store_hash = wrapper.credentials.method(storage).call ||
+                      wrapper.credentials.method("#{storage}=").call({})
 
         # not nice... the wrapper.obj.changed? will only be triggered if we clone the hash
         # Is this a bug? https://github.com/rails/rails/issues/11968
         # TODO: check if there is a better solution
         store_hash = store_hash.clone
 
-        options[:persist_attrs].each do |attribute|
-          store_nonempty_attribute(store_hash, client, attribute)
-        end
+        store_attributes(store_hash, client)
 
-        wrapper.obj.method("#{options[:storage_attr]}=").call(store_hash)
+        wrapper.credentials.method("#{storage}=").call(store_hash)
       end
 
       def load_token_state(wrapper, client)
-        unless wrapper.obj.respond_to?(options[:storage_attr])
-          fail "Persistence object does not support the storage attribute #{options[:storage_attr]}"
+        storage = options[:storage_attr]
+        unless wrapper.credentials.respond_to?(storage)
+          fail "Persistence object does not support the storage attribute #{storage}"
         end
 
-        store_hash = wrapper.obj.method(options[:storage_attr]).call
+        store_hash = wrapper.credentials.method(storage).call
         if store_hash
-          options[:persist_attrs].each do |i|
-            client.method(i.to_s + '=').call(store_hash[i.to_s]) if client.respond_to?(i.to_s + '=')
+          options[:persist_attrs].each do |attribute|
+            client.method("#{attribute}=").call(store_hash[attribute]) if client.respond_to?("#{attribute}=")
           end
         end
       end
@@ -94,11 +95,11 @@ module Signet
         # we are looking to auth... so nothing to load
         client = Factory.create_from_env(options[:name], env, load_token: false)
 
-        r = Rack::Response.new
+        response = Rack::Response.new
         redirect_uri = client.authorization_uri(auth_options(env)).to_s
-        r.redirect(redirect_uri)
+        response.redirect(redirect_uri)
 
-        r.finish
+        response.finish
       end
 
       def create_and_save_auth_client_to_env(env)
@@ -115,10 +116,10 @@ module Signet
 
       def save_env_client_and_persistence(env, client)
         if options[:handle_auth_callback]
-          obj = options[:extract_by_oauth_id].call env, client, client.decoded_id_token['sub']
-          persist_token_state obj, client
-          obj.persist
-          env["signet.#{options[:name]}.persistence_obj"] = obj.obj
+          user_oauth_credentials = options[:extract_by_oauth_id].call env, client, client.decoded_id_token['sub']
+          persist_token_state user_oauth_credentials, client
+          user_oauth_credentials.persist
+          env["signet.#{options[:name]}.persistence_obj"] = user_oauth_credentials.credentials
         else
           env["signet.#{options[:name]}.auth_client"] = client
         end
@@ -136,6 +137,12 @@ module Signet
         if client.respond_to?(attribute) && client.method(attribute).call
           # only transfer the value if it is non-nil
           store_hash[attribute.to_s] = client.method(attribute).call
+        end
+      end
+
+      def store_attributes(store_hash, client)
+        options[:persist_attrs].each do |attribute|
+          store_nonempty_attribute(store_hash, client, attribute)
         end
       end
 

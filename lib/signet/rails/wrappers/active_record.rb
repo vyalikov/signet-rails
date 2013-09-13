@@ -2,16 +2,16 @@ module Signet
   module Rails
     module Wrappers
       class ActiveRecord
-        def initialize(obj, client)
-          @obj = obj
+        def initialize(credentials, client)
+          @credentials = credentials
           @client = client
         end
 
-        attr_reader :obj
+        attr_reader :credentials
         attr_reader :client
 
         def persist
-          @obj.save if @obj.changed?
+          @credentials.save if @credentials.changed?
         end
       end
     end
