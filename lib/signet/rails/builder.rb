@@ -104,7 +104,6 @@ module Signet
             user = get_or_create_user(provider_name, uid, env, type, wrapper_name)
             get_or_initialize_credentials_from_wrapper(user, provider_name, wrapper_name)
           rescue ActiveRecord::RecordNotFound
-            p "ERRROR CRED CREATOR"
             nil
           end
         end
@@ -153,9 +152,10 @@ module Signet
       end
 
       def get_wrapper_instance(wrapper_name)
-        return @wrapper_instance if @wrapper_instance
+        @wrapper_instance ||= { }
+        return @wrapper_instance[wrapper_name] if @wrapper_instance[wrapper_name]
         require "signet/rails/wrappers/#{wrapper_name}"
-        @wrapper_instance = "Signet::Rails::Wrappers::#{wrapper_name.camelize}".constantize
+        @wrapper_instance[wrapper_name] = "Signet::Rails::Wrappers::#{wrapper_name.camelize}".constantize
       end
 
       def first_or_create_from_wrapper(uid, provider_name, wrapper_name)

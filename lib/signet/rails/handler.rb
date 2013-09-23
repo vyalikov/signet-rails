@@ -62,7 +62,6 @@ module Signet
 
       def load_token_state(wrapper, client)
         storage = options[:storage_attr]
-        p wrapper
         unless wrapper.credentials.respond_to?(storage)
           fail "Persistence object does not support the storage attribute #{storage}"
         end
