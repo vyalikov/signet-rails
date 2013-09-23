@@ -1,41 +1,56 @@
-require "ostruct"
+require 'ostruct'
 
 module Signet
   module Rails
     module Wrappers
       class MemoryStore
 
+        class << self
+          attr_accessor :user_data
+        end
+
+        MemoryStore.user_data = {}
+
         def initialize(credentials, client)
           @credentials = credentials
           @client = client
-          @@usersData = {}
         end
 
         def persist
-          false
         end
 
         attr_reader :credentials
         attr_reader :client
 
-        # should return [USER] abstract structure 
+        def self.save!(user)
+          MemoryStore.user_data[user.uid] = Marshal.dump user
+          user
+        end
+
+        def self.load(uid)
+          stored_string = MemoryStore.user_data[uid]
+          return Marshal.load stored_string if stored_string
+          nil
+        end
+
+        # should return [USER] abstract structure
         def self.first_or_create_user(uid, provider_name)
-          @@usersData ||= {}
 
           user_hash_name = generate_uid(uid, provider_name)
-          return @@usersData[user_hash_name] if @@usersData[user_hash_name]
+          user = load user_hash_name
+          return user if user
 
           user = OpenStruct.new
           user.id = uid # simulate DB
           user.uid  = generate_uid(uid, provider_name)
           user.credentials = {}
 
-          @@usersData[user_hash_name] = user
+          save! user
         end
 
         # should return [USER] abstract structure
         def self.get_user_by_id(id)
-          @@usersData[id]
+          load id
         end
 
         # user is [USER] abstract structure - returns [CREDENTIAL] structure
@@ -49,11 +64,13 @@ module Signet
 
           credential = OpenStruct.new
           credential.name = provider_name
-          credential.signet = {}                     
-          credential.id = provider_name.to_s + Random.rand(999999).to_s # simulate DB
-          credential.user = user; 
+          credential.signet = {}
+          credential.id = provider_name.to_s + Random.rand(999_999).to_s # simulate DB
+          credential.user = user
 
           user.credentials[provider_name] = credential
+          save! user
+          credential
         end
 
         ########################################################################
