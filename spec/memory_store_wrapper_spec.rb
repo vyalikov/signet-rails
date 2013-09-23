@@ -1,5 +1,7 @@
 require 'spec_helper'
 require 'signet/rails/wrappers/memory_store.rb'
+require 'open-uri'
+
 
 describe Signet::Rails::Wrappers::MemoryStore do
 
@@ -13,6 +15,8 @@ describe Signet::Rails::Wrappers::MemoryStore do
 
     user3 = store.first_or_create_user '12345', :google
     user4 = store.first_or_create_user '123456', :google
+
+    p open('http://localhost:9000')
 
     user3.should == user1
     user4.should == user2

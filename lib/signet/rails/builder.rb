@@ -82,6 +82,7 @@ module Signet
       end
 
       def call(env)
+        p 'called'
         to_app.call(env)
       end
 
@@ -104,7 +105,6 @@ module Signet
             user = get_or_create_user(provider_name, uid, env, type, wrapper_name)
             get_or_initialize_credentials_from_wrapper(user, provider_name, wrapper_name)
           rescue ActiveRecord::RecordNotFound
-            p "ERRROR CRED CREATOR"
             nil
           end
         end
