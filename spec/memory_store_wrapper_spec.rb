@@ -1,5 +1,3 @@
-require 'minitest/spec'
-require 'minitest/autorun'
 require 'spec_helper'
 require 'signet/rails/wrappers/memory_store.rb'
 
