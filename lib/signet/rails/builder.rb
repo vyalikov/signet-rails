@@ -60,13 +60,15 @@ module Signet
 
         # The following lambda will be used when creating a new client in a factory
         # to get the persistence object
-        combined_options[:extract_from_session] ||= oauth_credentials_fetcher(provider_name)
+        combined_options[:extract_from_session] ||= \
+         oauth_credentials_fetcher(provider_name, combined_options[:persistence_wrapper].to_s)
 
         # The following lambda will be used when handling the callback from the oauth server
         # In this flow we might not yet have established a session... need to handle two
         # flows, one for login, one not
         # when on a login auth_callback, how do we get the persistence object from the JWT?
-        combined_options[:extract_by_oauth_id] ||= oauth_credentials_creator(provider_name, combined_options[:type])
+        combined_options[:extract_by_oauth_id] ||= \
+          oauth_credentials_creator(provider_name, combined_options[:type], combined_options[:persistence_wrapper].to_s)
 
         wrap_extraction_callbacks_in_persistence(combined_options)
 
@@ -85,34 +87,38 @@ module Signet
 
       private
 
-      def get_or_create_user(name, id, env, type)
+      def get_or_create_user(provider_name, uid, env, type, wrapper_name)
+
         if type == :login
-          User.first_or_create(uid: "#{name}_#{id}")
+           first_or_create_from_wrapper(uid, provider_name, wrapper_name)
         else
-          process_with_user_id_from_session_strict(env['rack.session']) do |user_id|
-            User.find(user_id)
-          end
+            process_with_user_id_from_session_strict(env['rack.session']) do |id|
+              find_from_wrapper(id, provider_name, wrapper_name)
+            end
         end
       end
 
-      def oauth_credentials_creator(name, type)
-        lambda do |env, client, id|
+      def oauth_credentials_creator(provider_name, type, wrapper_name)
+        lambda do |env, client, uid|
           begin
-            u = get_or_create_user(name, id, env, type)
-            u.o_auth2_credentials.first_or_initialize(name: name)
+            user = get_or_create_user(provider_name, uid, env, type, wrapper_name)
+            get_or_initialize_credentials_from_wrapper(user, provider_name, wrapper_name)
           rescue ActiveRecord::RecordNotFound
+            p "ERRROR CRED CREATOR"
             nil
           end
         end
       end
 
-      def oauth_credentials_fetcher(name)
+      def oauth_credentials_fetcher(provider_name, wrapper_name)
+
         lambda do |session, client|
           process_with_user_id_from_session(session) do |user_id|
-            u = User.find(user_id)
-            u.o_auth2_credentials.where(name: name).first
+            user = find_from_wrapper(user_id, provider_name, wrapper_name)
+            get_credentials_from_wrapper(user, provider_name, wrapper_name)
           end
         end
+
       end
 
       def wrap_extraction_callbacks_in_persistence(combined_options)
@@ -139,13 +145,42 @@ module Signet
 
       def process_with_user_id_from_session(session, &block)
         return nil unless session && session[:user_id]
-
         begin
           yield session[:user_id]
         rescue ActiveRecord::RecordNotFound
           nil
         end
       end
+
+      def get_wrapper_instance(wrapper_name)
+        return @wrapper_instance if @wrapper_instance
+        require "signet/rails/wrappers/#{wrapper_name}"
+        @wrapper_instance = "Signet::Rails::Wrappers::#{wrapper_name.camelize}".constantize
+      end
+
+      def first_or_create_from_wrapper(uid, provider_name, wrapper_name)
+        instance = get_wrapper_instance(wrapper_name)
+        instance.first_or_create_user(uid, provider_name)
+      end
+
+      def find_from_wrapper(id, provider_name, wrapper_name)
+        instance = get_wrapper_instance(wrapper_name)
+        instance.get_user_by_id(id)
+      end
+
+
+      # getting oauth credentials from user - 
+      def get_credentials_from_wrapper(user, provider_name, wrapper_name)
+         instance = get_wrapper_instance(wrapper_name)
+         instance.get_user_credentials(user, provider_name)
+      end
+
+      def get_or_initialize_credentials_from_wrapper(user, provider_name, wrapper_name)
+         instance = get_wrapper_instance(wrapper_name)
+         instance.get_or_initialize_user_credentials(user, provider_name)
+      end
+
+
     end
   end
 end
