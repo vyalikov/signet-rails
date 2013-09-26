@@ -62,7 +62,6 @@ module Signet
 
       def load_token_state(wrapper, client)
         storage = options[:storage_attr]
-        p wrapper
         unless wrapper.credentials.respond_to?(storage)
           fail "Persistence object does not support the storage attribute #{storage}"
         end
@@ -103,18 +102,22 @@ module Signet
       end
 
       def create_and_save_auth_client_to_env(env)
+
         client = Factory.create_from_env options[:name], env, load_token: false
           query_string_params = Rack::Utils.parse_query(env['QUERY_STRING'])
           client.code = query_string_params['code']
+
           client.redirect_uri = auth_options(env)[:redirect_uri]
 
-          client.fetch_access_token!
-
+          hash_t = client.fetch_access_token!
           save_env_client_and_persistence(env, client)
       end
 
       def save_env_client_and_persistence(env, client)
+
         if options[:handle_auth_callback]
+          p 'id_tok'
+          p client.decoded_id_token['sub'] 
           user_oauth_credentials = options[:extract_by_oauth_id].call env, client, client.decoded_id_token['sub']
           persist_token_state user_oauth_credentials, client
           user_oauth_credentials.persist

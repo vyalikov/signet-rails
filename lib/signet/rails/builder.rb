@@ -82,7 +82,6 @@ module Signet
       end
 
       def call(env)
-        p 'called'
         to_app.call(env)
       end
 

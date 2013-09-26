@@ -18,12 +18,12 @@ module Signet
           "#{provider_name}_#{id}"
         end
 
-        # should return [USER] abstract structure 
+        # should return [USER] abstract structure - activerecord here
         def self.first_or_create_user(uid, provider_name)
           User.first_or_create(uid: generate_user_uid(uid, provider_name) )
         end
 
-        # should return [USER] abstract structure
+        # should return [USER] abstract structure - activerecord here
         def self.get_user_by_id(id)
           User.find(id)
         end
