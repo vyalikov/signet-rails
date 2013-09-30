@@ -43,9 +43,10 @@ module Signet
 
       def persist_token_state(wrapper, client)
         storage = options[:storage_attr]
-        unless wrapper.credentials.respond_to?(storage)
-          fail "Persistence object does not support the storage attribute #{storage}"
-        end
+
+        # unless wrapper.credentials.respond_to?(storage)
+        #   fail "Persistence object does not support the storage attribute #{storage}"
+        # end
 
         store_hash = wrapper.credentials.method(storage).call ||
                       wrapper.credentials.method("#{storage}=").call({})
@@ -61,12 +62,15 @@ module Signet
       end
 
       def load_token_state(wrapper, client)
+
         storage = options[:storage_attr]
+
         unless wrapper.credentials.respond_to?(storage)
           fail "Persistence object does not support the storage attribute #{storage}"
         end
 
         store_hash = wrapper.credentials.method(storage).call
+
         if store_hash
           options[:persist_attrs].each do |attribute|
             client.method("#{attribute}=").call(store_hash[attribute]) if client.respond_to?("#{attribute}=")
@@ -116,8 +120,6 @@ module Signet
       def save_env_client_and_persistence(env, client)
 
         if options[:handle_auth_callback]
-          p 'id_tok'
-          p client.decoded_id_token['sub'] 
           user_oauth_credentials = options[:extract_by_oauth_id].call env, client, client.decoded_id_token['sub']
           persist_token_state user_oauth_credentials, client
           user_oauth_credentials.persist

@@ -8,6 +8,7 @@ module Signet
 
       def self.create_from_env(name, env, options = { load_token: true })
         # TODO: not pretty...thread safe? best approach? Other uses below
+
         env["signet.#{name}.instance"] ||
         get_client_from_handler(env["signet.#{name}"], name, env, options)
       end
@@ -24,9 +25,10 @@ module Signet
       end
 
       def self.extract_instance_from_env(handler, env, client)
-        obj = handler.options[:extract_from_session].call env['rack.session'], client
-        handler.load_token_state obj, client
 
+        obj = handler.options[:extract_from_session].call env['rack.session'], client
+
+        handler.load_token_state obj, client
         # client.obj = obj
         env["signet.#{name}.instance"] = obj
       end

@@ -22,6 +22,7 @@ module Signet
         attr_reader :credentials
         attr_reader :client
 
+
         def self.save!(user)
           MemoryStore.user_data[user.uid] = Marshal.dump user
           user
@@ -45,6 +46,7 @@ module Signet
           user.uid  = generate_uid(uid, provider_name)
           user.credentials = {}
 
+
           save! user
         end
 
@@ -64,12 +66,14 @@ module Signet
 
           credential = OpenStruct.new
           credential.name = provider_name
-          credential.signet = {}
+          credential.signet = { }
           credential.id = provider_name.to_s + Random.rand(999_999).to_s # simulate DB
           credential.user = user
 
           user.credentials[provider_name] = credential
+
           save! user
+
           credential
         end
 

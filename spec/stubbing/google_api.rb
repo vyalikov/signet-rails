@@ -26,3 +26,10 @@ stubbed_access_token = {
 # Addressable::URI.encode()
 stub_request(:post, 'https://accounts.google.com/o/oauth2/token').
   to_return(:status => 200, :body => stubbed_access_token.to_json, :headers => {})
+
+stub_request(:get, "https://www.googleapis.com/discovery/v1/apis/plus/v1/rest").
+with(:headers => {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip', 'User-Agent'=>'Example Ruby application/1.0.0 google-api-ruby-client/0.7.0.rc2 Linux/3.8.0-31-generic
+(gzip)'}).
+to_return(:status => 200, :body => "{}", :headers => {})
+
+
