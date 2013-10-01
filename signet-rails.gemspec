@@ -25,7 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rack-test"
   spec.add_development_dependency "rspec"
-  # spec.add_development_dependency "google-api-client", git: "git@github.com:google/google-api-ruby-client.git"
   spec.add_development_dependency "webmock"
 
 end

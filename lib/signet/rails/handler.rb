@@ -151,6 +151,7 @@ module Signet
       end
 
       def getting_auth_path?(env)
+        p 'getting auth path'
         "/signet/#{options[:name]}/auth" == env['PATH_INFO'] && 'GET' == env['REQUEST_METHOD']
       end
 

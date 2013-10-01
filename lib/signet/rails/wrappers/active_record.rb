@@ -4,6 +4,9 @@ module Signet
       class ActiveRecord
         def initialize(credentials, client)
           @credentials = credentials
+
+          p 'init creds' 
+          p credentials
           @client = client
         end
 

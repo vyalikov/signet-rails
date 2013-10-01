@@ -3,7 +3,6 @@ ENV['RAILS_ENV'] = 'test'
 
 ENV['CLIENT_ID'] = '106644416174-sl0b09fja92d7mnnp7ibkv72e6qdkdp1.apps.googleusercontent.com'
 
-require 'stubbing/google_api.rb'
 require 'rack_app/rack_app'
 require 'rack'
 require 'signet/rails/builder'
