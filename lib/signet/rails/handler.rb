@@ -108,13 +108,13 @@ module Signet
       def create_and_save_auth_client_to_env(env)
 
         client = Factory.create_from_env options[:name], env, load_token: false
-          query_string_params = Rack::Utils.parse_query(env['QUERY_STRING'])
-          client.code = query_string_params['code']
+        query_string_params = Rack::Utils.parse_query(env['QUERY_STRING'])
+        client.code = query_string_params['code']
 
-          client.redirect_uri = auth_options(env)[:redirect_uri]
+        client.redirect_uri = auth_options(env)[:redirect_uri]
 
-          hash_t = client.fetch_access_token!
-          save_env_client_and_persistence(env, client)
+        hash_t = client.fetch_access_token!
+        save_env_client_and_persistence(env, client)
       end
 
       def save_env_client_and_persistence(env, client)
@@ -151,7 +151,6 @@ module Signet
       end
 
       def getting_auth_path?(env)
-        p 'getting auth path'
         "/signet/#{options[:name]}/auth" == env['PATH_INFO'] && 'GET' == env['REQUEST_METHOD']
       end
 

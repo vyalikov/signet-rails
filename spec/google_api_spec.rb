@@ -3,10 +3,6 @@ require 'open-uri'
 require 'test/unit'
 require 'ostruct'
 
-require 'google/api_client'
-require 'google/api_client/client_secrets'
-require 'google/api_client/auth/installed_app'
-
 require 'webmock'
 require 'json'
 require 'jwt'
@@ -38,7 +34,7 @@ class GoogleApiSpec < Test::Unit::TestCase
     follow_redirect!
   end
 
-  def test_get_signet_google_auth_client
+  def test_signet_google_auth_client
 
     mock_signet_oauth
 
@@ -51,41 +47,8 @@ class GoogleApiSpec < Test::Unit::TestCase
 
     auth = Signet::Rails::Factory.create_from_env :google, last_request.env
 
-    auth
+    assert_equal !auth , false
   end
-
-
-  def test_google_api_client_initialization
-
-    mock_google_api
-
-    auth = test_get_signet_google_auth_client
-
-    client = Google::APIClient.new(
-      :application_name => 'Example Ruby application',
-      :application_version => '1.0.0'
-    )
-
-    client.authorization = auth
-    client.authorization.access_token = 'dumbtoken'
-
-    doc = File.read('spec/google_apis_json/plusv1.json')
-    client.register_discovery_document('plusv1', 'v1', doc)
-
-    plus = client.discovered_api('plusv1')
-
-
-    # Load client secrets from your client_secrets.json.
-    client_secrets = Google::APIClient::ClientSecrets.load
-
-    result = client.execute(
-      :api_method => plus.activities.list,
-      :parameters => {'collection' => 'public', 'userId' => 'me'}
-    )
-
-    p result.response
-  end
-
 
   private 
   def insert_user_id_in_session(provider_name, request_env)
@@ -116,13 +79,6 @@ class GoogleApiSpec < Test::Unit::TestCase
 
     stub_request(:post, 'https://accounts.google.com/o/oauth2/token').
       to_return(:status => 200, :body => stubbed_access_token.to_json, :headers => {})
-  end
-
-  def mock_google_api
-
-    stub_request(:get, "https://www.googleapis.com/plus/v1/people/me/activities/public").
-      to_return(:status => 200, :body => "{ public responce }", :headers => {})
-
   end
 
 end
